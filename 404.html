@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04070D">
+<meta name="robots" content="noindex">
+<title>404 // SIGNAL LOST — ASTROICERS</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#04070D; --cyan:#00E5FF; --cyan-dim:rgba(0,229,255,.30);
+    --red:#FF2A4F; --text:#C9D8E2; --dim:#5A7184; --line:rgba(0,229,255,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:var(--void);color:var(--text);
+    font-family:'Chakra Petch','Noto Sans TC',sans-serif;
+    min-height:100vh;min-height:100dvh;overflow:hidden;
+    display:grid;place-items:center;padding:24px;position:relative;
+  }
+  /* 背景網格 */
+  #grid{position:fixed;inset:0;z-index:0;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:54px 54px;
+    mask-image:radial-gradient(120% 90% at 50% 42%,#000 0%,transparent 70%);
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 42%,#000 0%,transparent 70%);
+    opacity:.45;}
+  #scan{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.16) 3px 4px);opacity:.4;}
+  .card{position:relative;z-index:2;width:min(520px,92vw);text-align:center;}
+  .classbar{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.24em;
+    color:var(--dim);display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:34px;}
+  .classbar .live{color:var(--red);display:inline-flex;align-items:center;gap:7px;font-weight:700;}
+  .classbar .dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 9px var(--red);
+    animation:blink 1.4s infinite;}
+  .code{font-size:clamp(96px,26vw,168px);font-weight:700;line-height:.92;letter-spacing:.04em;
+    color:#EAF6FB;text-shadow:0 0 32px rgba(0,229,255,.3);position:relative;}
+  .code::before,.code::after{content:'404';position:absolute;inset:0;}
+  .code::before{color:var(--cyan);transform:translate(-3px,0);mix-blend-mode:screen;opacity:.55;
+    animation:gx 2.6s infinite steps(2);}
+  .code::after{color:var(--red);transform:translate(3px,0);mix-blend-mode:screen;opacity:.45;
+    animation:gx 3.1s infinite reverse steps(2);}
+  .lost{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.3em;
+    color:var(--red);font-weight:700;margin:18px 0 10px;}
+  .desc{font-family:'Noto Sans TC',sans-serif;font-size:15px;color:var(--dim);
+    letter-spacing:.06em;line-height:1.7;margin-bottom:38px;}
+  .home{display:inline-flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:.14em;font-weight:500;
+    color:var(--cyan);text-decoration:none;padding:13px 26px;
+    border:1px solid var(--cyan-dim);background:rgba(0,229,255,.04);
+    clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);
+    transition:background .2s,box-shadow .2s;}
+  .home:hover{background:rgba(0,229,255,.12);box-shadow:0 0 24px rgba(0,229,255,.18);}
+  .home svg{width:16px;height:16px;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  @keyframes gx{0%,100%{transform:translate(-3px,0)}50%{transform:translate(2px,-1px)}}
+  @media (prefers-reduced-motion:reduce){
+    .code::before,.code::after,.dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+  <div id="grid"></div>
+  <div id="scan"></div>
+  <main class="card">
+    <div class="classbar"><span>SECURE ID // CLASSIFIED</span><span class="live"><span class="dot"></span>LINK DOWN</span></div>
+    <div class="code" data-text="404">404</div>
+    <div class="lost">&gt;&gt; SIGNAL LOST</div>
+    <p class="desc">要求的座標不存在於此節點。<br>連線已被路由回安全閘道。</p>
+    <a class="home" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      RETURN TO SECURE ID
+    </a>
+  </main>
+</body>
+</html>
