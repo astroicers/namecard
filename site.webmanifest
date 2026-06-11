@@ -1,11 +1,17 @@
 {
+  "id": "/",
   "name": "ASTROICERS // SECURE ID",
   "short_name": "ASTROICERS",
   "description": "陳齊修 (Astroicers) — Offensive Security Specialist / Red Team Lead",
   "lang": "zh-Hant",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "categories": ["personal"],
+  "prefer_related_applications": false,
   "background_color": "#04070D",
   "theme_color": "#04070D",
   "icons": [
@@ -20,7 +26,7 @@
       "type": "image/png"
     },
     {
-      "src": "/assets/icon-512.png",
+      "src": "/assets/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -12,6 +12,11 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<!-- iOS / Android 安裝（standalone 全螢幕）-->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ASTROICERS">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -33,7 +38,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root{
     --void:#04070D;
@@ -64,12 +69,12 @@
   #boot-log .grant{color:var(--red);font-weight:700;letter-spacing:.2em;}
 
   /* ── 舞台 ───────────────────────────── */
-  #stage{position:relative;z-index:10;display:grid;place-items:center;min-height:100vh;min-height:100dvh;
+  #stage{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh;
     padding:clamp(14px,4vh,40px) 14px;
     padding-top:max(clamp(14px,4vh,40px),env(safe-area-inset-top));
     padding-bottom:max(clamp(14px,4vh,40px),env(safe-area-inset-bottom));}
 
-  #flip{width:100%;max-width:392px;perspective:1400px;}
+  #flip{width:100%;max-width:392px;perspective:1400px;margin:auto 0;}
   #flipInner{position:relative;width:100%;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.7,0,.2,1);}
   #flip.flipped #flipInner{transform:rotateY(180deg);}
 
@@ -182,6 +187,20 @@
   .c-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:22px 22px 0;}
+
+  /* 矮視窗（多數手機直向，含 iOS standalone 扣掉 safe-area 後）：壓縮垂直間距，
+     讓整張卡片裝得下並維持垂直置中；高機（>880px）不受影響保持原本寬鬆排版。 */
+  @media (max-height:880px){
+    .avatar-wrap{padding:10px 0 2px;}
+    .name-block{padding:4px 22px 0;}
+    .role{margin-top:10px;}
+    .tags{padding:12px 22px 0;}
+    .rule{margin-top:12px;}
+    .stack{padding:10px 22px 0;}
+    .contacts{padding:12px 22px 0;}
+    .actions{padding:14px 22px 0;}
+    #front{padding-bottom:12px;}
+  }
   .btn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
     padding:13px 10px;cursor:pointer;background:transparent;color:var(--cyan);border:1px solid rgba(0,229,255,.4);
     clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);transition:background .2s,color .2s,box-shadow .2s;
@@ -341,9 +360,9 @@
 
 <div class="toast" id="toast">CONTACT EXPORTED ✓</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" crossorigin="anonymous"></script>
 <script>
 (function(){
   /* ════════════ 設定區 ════════════
@@ -535,6 +554,15 @@
 
   nameEl.addEventListener('mouseenter',()=>scramble(nameEl,'ASTROICERS',560));
 })();
+</script>
+
+<!-- PWA：註冊 Service Worker（安裝/離線所需）-->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  }
 </script>
 </body>
 </html>
