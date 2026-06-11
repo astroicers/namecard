@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04070D">
+<title>ASTROICERS // SECURE ID</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#04070D;
+    --cyan:#00E5FF;
+    --cyan-dim:rgba(0,229,255,.30);
+    --red:#FF2A4F;
+    --text:#C9D8E2;
+    --dim:#5A7184;
+    --panel:rgba(6,13,22,.82);
+    --line:rgba(0,229,255,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:var(--void);
+    color:var(--text);
+    font-family:'Chakra Petch','Noto Sans TC',sans-serif;
+    overflow-x:hidden;
+  }
+  #bg{position:fixed;inset:0;z-index:0;}
+
+  /* ── 開機解密 ───────────────────────── */
+  #boot{position:fixed;inset:0;z-index:50;background:var(--void);display:grid;place-items:center;padding:24px;}
+  #boot-log{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.95;color:var(--cyan);width:min(420px,92vw);}
+  #boot-log .ln{opacity:0;white-space:nowrap;overflow:hidden;}
+  #boot-log .ok{color:var(--dim);}
+  #boot-log .ok b{color:var(--cyan);font-weight:500;}
+  #boot-log .grant{color:var(--red);font-weight:700;letter-spacing:.2em;}
+
+  /* ── 舞台 ───────────────────────────── */
+  #stage{position:relative;z-index:10;display:grid;place-items:center;min-height:100vh;min-height:100dvh;
+    padding:clamp(14px,4vh,40px) 14px;
+    padding-top:max(clamp(14px,4vh,40px),env(safe-area-inset-top));
+    padding-bottom:max(clamp(14px,4vh,40px),env(safe-area-inset-bottom));}
+
+  #flip{width:100%;max-width:392px;perspective:1400px;}
+  #flipInner{position:relative;width:100%;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.7,0,.2,1);}
+  #flip.flipped #flipInner{transform:rotateY(180deg);}
+
+  .face{
+    width:100%;
+    background:var(--panel);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(0,229,255,.26);
+    clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px);
+    box-shadow:0 0 60px rgba(0,229,255,.06),inset 0 0 70px rgba(0,229,255,.025);
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    overflow:hidden;
+  }
+  .face::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px);mix-blend-mode:overlay;}
+
+  #front{padding:0 0 20px;opacity:0;}
+  #back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;cursor:pointer;}
+
+  .bracket{position:absolute;width:22px;height:22px;border-color:var(--cyan);border-style:solid;border-width:0;opacity:0;z-index:3;}
+  .b-tl{top:9px;left:9px;border-top-width:2px;border-left-width:2px;}
+  .b-tr{top:9px;right:9px;border-top-width:2px;border-right-width:2px;}
+  .b-bl{bottom:9px;left:9px;border-bottom-width:2px;border-left-width:2px;}
+  .b-br{bottom:9px;right:9px;border-bottom-width:2px;border-right-width:2px;}
+
+  .classbar{display:flex;justify-content:space-between;align-items:center;
+    padding:9px 18px;border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase;}
+  .classbar .live{display:flex;align-items:center;gap:7px;color:var(--red);letter-spacing:.16em;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+  /* ── 照片 + 賽博框 ─────────────────── */
+  .avatar-wrap{display:grid;place-items:center;padding:24px 0 4px;}
+  .photo-stage{width:132px;height:132px;position:relative;}
+  .hud{position:absolute;inset:0;pointer-events:none;}
+  .hud svg{width:100%;height:100%;overflow:visible;display:block;}
+  .frame-ring{transform-origin:center;animation:spin 16s linear infinite;}
+  .lock-arc{transform-origin:center;animation:spinrev 7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes spinrev{to{transform:rotate(-360deg);}}
+  .photo-hex{position:absolute;inset:14px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#081420;overflow:hidden;}
+  .photo-hex img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .ph-main{animation:gMain 5.2s infinite;}
+  .duotone .ph-main{filter:grayscale(1) contrast(1.06) brightness(.92);}
+  .duotone .tint{position:absolute;inset:0;background:linear-gradient(165deg,rgba(0,229,255,.34),rgba(4,7,13,.15) 55%,rgba(255,42,79,.12));mix-blend-mode:color;pointer-events:none;}
+  .vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,transparent 52%,rgba(4,7,13,.55));pointer-events:none;}
+  .ph-ghost{opacity:0;mix-blend-mode:screen;pointer-events:none;}
+  .ph-r{filter:grayscale(1) sepia(1) saturate(6) hue-rotate(-45deg) brightness(1.05);animation:gA 5.2s infinite;}
+  .ph-c{filter:grayscale(1) sepia(1) saturate(6) hue-rotate(135deg) brightness(1.05);animation:gB 5.2s .07s infinite;}
+  .photo-scan{position:absolute;left:0;right:0;top:-6%;height:3px;z-index:2;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+    box-shadow:0 0 14px 2px var(--cyan-dim);animation:photoscan 5.2s ease-in-out infinite;pointer-events:none;}
+  @keyframes photoscan{
+    0%{top:-6%;opacity:0;}
+    4%{opacity:.95;}
+    20%{top:104%;opacity:.95;}
+    24%{top:104%;opacity:0;}
+    100%{top:104%;opacity:0;}
+  }
+  .ph-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    background:repeating-linear-gradient(0deg,rgba(0,229,255,.035) 0 2px,transparent 2px 5px),#081420;}
+  .ph-empty svg{width:56%;height:auto;opacity:.55;}
+  .ph-empty .cap{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;}
+  @keyframes gA{
+    0%,89.9%,96%,100%{opacity:0;transform:none;clip-path:inset(0);}
+    90%{opacity:.85;transform:translate(2.5px,-1.5px);clip-path:inset(12% 0 58% 0);}
+    92%{opacity:.7;transform:translate(-2px,1.5px);clip-path:inset(55% 0 14% 0);}
+    94%{opacity:.6;transform:translate(1.5px,0);clip-path:inset(30% 0 40% 0);}
+  }
+  @keyframes gB{
+    0%,89.9%,96%,100%{opacity:0;transform:none;clip-path:inset(0);}
+    90.5%{opacity:.8;transform:translate(-2.5px,1.5px);clip-path:inset(38% 0 32% 0);}
+    92.5%{opacity:.6;transform:translate(2px,-1px);clip-path:inset(68% 0 6% 0);}
+    94.5%{opacity:.5;transform:translate(-1.5px,.5px);clip-path:inset(8% 0 72% 0);}
+  }
+  @keyframes gMain{
+    0%,89.9%,95%,100%{transform:none;}
+    91%{transform:translate(1px,-.5px);}
+    93%{transform:translate(-1px,.5px);}
+  }
+
+  /* ── 姓名 ──────────────────────────── */
+  .name-block{text-align:center;padding:6px 22px 0;}
+  h1{font-size:clamp(30px,9vw,40px);font-weight:700;letter-spacing:.08em;line-height:1;color:#EAF6FB;text-shadow:0 0 22px rgba(0,229,255,.22);}
+  .subname{margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.38em;color:var(--cyan);}
+  .role{margin-top:16px;font-size:13.5px;font-weight:600;letter-spacing:.04em;color:var(--text);line-height:1.5;}
+  .role .sep{color:var(--cyan);margin:0 7px;}
+  .role .zh{display:block;margin-top:3px;font-family:'Noto Sans TC',sans-serif;font-weight:400;font-size:11.5px;letter-spacing:.2em;color:var(--dim);}
+
+  .tags{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:18px 22px 0;}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;padding:5px 11px;color:var(--cyan);
+    border:1px solid rgba(0,229,255,.3);clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);opacity:0;}
+  .tag.red{color:var(--red);border-color:rgba(255,42,79,.45);}
+
+  .rule{margin:22px 22px 0;height:1px;background:linear-gradient(90deg,var(--cyan-dim),transparent 75%);transform-origin:left;transform:scaleX(0);}
+  .stack{padding:16px 22px 0;}
+  .stack-key{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+  .stack-grid{display:flex;flex-wrap:wrap;gap:6px 0;}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.02em;opacity:0;}
+  .chip::after{content:'/';color:var(--cyan);opacity:.5;margin:0 8px;}
+  .chip:last-child::after{content:'';margin:0;}
+
+  .contacts{padding:18px 22px 0;display:grid;gap:2px;}
+  .c-row{display:flex;align-items:center;gap:14px;padding:11px 12px;margin:0 -12px;text-decoration:none;
+    border:1px solid transparent;transition:border-color .2s,background .2s;opacity:0;border-radius:2px;}
+  .c-row:hover,.c-row:focus-visible{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.04);outline:none;}
+  .c-ico{width:16px;height:16px;flex-shrink:0;color:var(--cyan);}
+  .c-key{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;color:var(--dim);width:64px;flex-shrink:0;text-transform:uppercase;}
+  .c-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:22px 22px 0;}
+  .btn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+    padding:13px 10px;cursor:pointer;background:transparent;color:var(--cyan);border:1px solid rgba(0,229,255,.4);
+    clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);transition:background .2s,color .2s,box-shadow .2s;
+    display:flex;align-items:center;justify-content:center;gap:7px;min-height:46px;}
+  .btn:hover,.btn:focus-visible{background:rgba(0,229,255,.1);box-shadow:0 0 18px rgba(0,229,255,.18);outline:none;}
+  .btn.primary{background:rgba(0,229,255,.12);}
+  .btn svg{width:15px;height:15px;}
+
+  /* ── 背面 QR ───────────────────────── */
+  #back{padding:18px;}
+  .back-top{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+  .back-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0;}
+  .back-id{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.42em;color:#EAF6FB;text-shadow:0 0 16px rgba(0,229,255,.3);}
+  .qr-panel{padding:14px;background:#fff;flex-shrink:0;
+    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+    box-shadow:0 0 40px rgba(0,229,255,.15);}
+  #qrcode{width:min(176px,42vh);aspect-ratio:1/1;}
+  #qrcode svg{width:100%;height:100%;display:block;}
+  .qr-cap{text-align:center;}
+  .qr-cap .t{font-size:13px;font-weight:600;letter-spacing:.18em;color:var(--cyan);font-family:'JetBrains Mono',monospace;}
+  .qr-cap .s{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:.04em;}
+  .back-foot{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--dim);text-align:center;text-transform:uppercase;border-top:1px solid var(--line);padding-top:12px;}
+
+  #scanline{position:absolute;left:0;right:0;top:0;height:2px;z-index:4;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 18px 3px var(--cyan-dim);opacity:0;pointer-events:none;}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:60;
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:var(--void);background:var(--cyan);
+    padding:11px 20px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion:reduce){
+    #boot{display:none;}
+    #front{opacity:1 !important;}
+    .bracket,.tag,.chip,.c-row{opacity:1 !important;}
+    .rule{transform:scaleX(1) !important;}
+    .dot,.frame-ring,.lock-arc,.ph-main,.ph-r,.ph-c,.photo-scan{animation:none;}
+    #flipInner{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="boot" aria-hidden="true">
+  <div id="boot-log">
+    <div class="ln ok">[<b>0.0021</b>] init secure_id_module ............ <b>OK</b></div>
+    <div class="ln ok">[<b>0.0146</b>] credential: OSCP / red_team ....... <b>OK</b></div>
+    <div class="ln ok">[<b>0.0388</b>] mTLS handshake ................... <b>OK</b></div>
+    <div class="ln ok">[<b>0.0512</b>] decrypt identity payload ........ <b>OK</b></div>
+    <div class="ln grant">&gt;&gt; ACCESS GRANTED</div>
+  </div>
+</div>
+
+<main id="stage">
+  <div id="flip">
+    <div id="flipInner">
+
+      <!-- ════ 正面 ════ -->
+      <section class="face" id="front" aria-label="電子名片正面">
+        <span class="bracket b-tl"></span><span class="bracket b-tr"></span>
+        <span class="bracket b-bl"></span><span class="bracket b-br"></span>
+        <div id="scanline"></div>
+
+        <div class="classbar">
+          <span>SECURE ID // CLASSIFIED</span>
+          <span class="live"><span class="dot"></span>LIVE</span>
+        </div>
+
+        <div class="avatar-wrap">
+          <div class="photo-stage" id="photoStage" aria-hidden="true"></div>
+        </div>
+
+        <div class="name-block">
+          <h1><span id="name" data-final="ASTROICERS">ASTROICERS</span></h1>
+          <div class="subname" id="subname" data-final="CHEN CHI-HSIU">CHEN CHI-HSIU</div>
+          <div class="role">
+            Offensive Security Specialist<span class="sep">/</span>Red Team Lead
+            <span class="zh">滲透測試 · 零信任架構 · AI 攻防自動化</span>
+          </div>
+        </div>
+
+        <div class="tags">
+          <span class="tag red">RED TEAM</span>
+          <span class="tag">OSCP</span>
+          <span class="tag">ZERO TRUST</span>
+          <span class="tag">CLOUD SEC</span>
+          <span class="tag">AI WARFARE</span>
+        </div>
+
+        <div class="rule"></div>
+
+        <div class="stack">
+          <div class="stack-key">// ARSENAL</div>
+          <div class="stack-grid">
+            <span class="chip">Python</span><span class="chip">Golang</span><span class="chip">Rust</span>
+            <span class="chip">C</span><span class="chip">K8s</span><span class="chip">AWS</span>
+            <span class="chip">Azure</span><span class="chip">Terraform</span><span class="chip">Cobalt&nbsp;Strike</span>
+            <span class="chip">BloodHound</span><span class="chip">MITRE&nbsp;ATT&CK</span>
+          </div>
+        </div>
+
+        <div class="rule"></div>
+
+        <nav class="contacts" aria-label="聯絡方式">
+          <a class="c-row" href="mailto:azz093093.830330@gmail.com">
+            <svg class="c-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <span class="c-key">MAIL</span><span class="c-val">azz093093.830330@gmail.com</span>
+          </a>
+          <a class="c-row" href="https://github.com/astroicers" target="_blank" rel="noopener">
+            <svg class="c-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5a10.5 10.5 0 0 0-3.32 20.46c.53.1.72-.23.72-.5v-1.95c-2.93.64-3.55-1.25-3.55-1.25-.48-1.22-1.17-1.55-1.17-1.55-.96-.65.07-.64.07-.64 1.06.08 1.62 1.09 1.62 1.09.94 1.61 2.47 1.15 3.07.88.1-.68.37-1.15.67-1.42-2.34-.27-4.8-1.17-4.8-5.2 0-1.15.41-2.09 1.08-2.83-.11-.27-.47-1.34.1-2.8 0 0 .89-.28 2.9 1.08a10.1 10.1 0 0 1 5.28 0c2-1.36 2.9-1.08 2.9-1.08.57 1.46.21 2.53.1 2.8.68.74 1.08 1.68 1.08 2.83 0 4.04-2.46 4.93-4.81 5.19.38.33.71.97.71 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+            <span class="c-key">GIT</span><span class="c-val">github.com/astroicers</span>
+          </a>
+          <a class="c-row" href="https://www.linkedin.com/in/chi-hsiu-chen-897528172/" target="_blank" rel="noopener">
+            <svg class="c-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05C20.4 8.65 21 11 21 14.1V21h-4v-6.1c0-1.45-.03-3.32-2.02-3.32-2.02 0-2.33 1.58-2.33 3.21V21H9z"/></svg>
+            <span class="c-key">IN</span><span class="c-val">linkedin.com/in/chi-hsiu-chen</span>
+          </a>
+          <a class="c-row" href="https://astroicers.link" target="_blank" rel="noopener">
+            <svg class="c-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            <span class="c-key">BLOG</span><span class="c-val">astroicers.link</span>
+          </a>
+        </nav>
+
+        <div class="actions">
+          <button class="btn primary" id="saveBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+            存通訊錄
+          </button>
+          <button class="btn" id="qrBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v3M17 21h4M14 21v-3"/></svg>
+            QR 分享
+          </button>
+        </div>
+      </section>
+
+      <!-- ════ 背面 QR ════ -->
+      <section class="face" id="back" aria-label="電子名片背面 QR Code">
+        <div class="back-top">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          TAP TO RETURN
+        </div>
+        <div class="back-body">
+          <div class="back-id">ASTROICERS</div>
+          <div class="qr-panel"><div id="qrcode"></div></div>
+          <div class="qr-cap">
+            <div class="t">SCAN TO CONNECT</div>
+            <div class="s" id="qrCap"></div>
+          </div>
+        </div>
+        <div class="back-foot">KILL CHAIN // RECON → EXPLOIT → DOMINATE</div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">CONTACT EXPORTED ✓</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  /* ════════════ 設定區 ════════════
+     CARD_URL:QR 掃描後開啟的網址(線上名片位置)。
+     QR_MODE:'url'  → QR 編碼網址(低密度、秒掃,推薦)
+              'vcard'→ QR 直接編碼 vCard(離線可存,但 QR 較密) */
+  const CARD_URL = 'https://id.astroicers.link';
+  const QR_MODE  = 'url';
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = matchMedia('(pointer:fine)').matches;
+
+  /* ════ vCard(無 ORG 欄位)════ */
+  const vcard = [
+    'BEGIN:VCARD','VERSION:3.0',
+    'N:陳;齊修;;;','FN:陳齊修 (Astroicers)',
+    'TITLE:Offensive Security Specialist / Red Team Lead',
+    'EMAIL;TYPE=INTERNET:azz093093.830330@gmail.com',
+    'URL:https://astroicers.link',
+    'URL:https://github.com/astroicers',
+    'URL:https://www.linkedin.com/in/chi-hsiu-chen-897528172/',
+    'END:VCARD'
+  ].join('\n');
+
+  /* ════ 頭像:照片 + 賽博框 ════
+     AVATAR_URL:照片網址或相對路徑(建議方形、≥320px),
+       例:'./me.jpg' 或 'https://id.astroicers.link/me.jpg'。
+       留空時顯示佔位剪影(AWAITING UPLINK)。
+     AVATAR_DUOTONE:true 套青色雙色調與整體配色融合;
+       false 維持照片原色。 */
+  const AVATAR_URL = './assets/me.jpg';
+  const AVATAR_DUOTONE = true;
+
+  (function buildAvatar(){
+    const stage = document.getElementById('photoStage');
+    let ticks = '';
+    for(let i=0;i<12;i++){
+      const a = i*30*Math.PI/180;
+      ticks += `<line x1="${(66+58*Math.cos(a)).toFixed(1)}" y1="${(66+58*Math.sin(a)).toFixed(1)}" x2="${(66+63*Math.cos(a)).toFixed(1)}" y2="${(66+63*Math.sin(a)).toFixed(1)}" stroke="#00E5FF" stroke-width="1" opacity=".45"/>`;
+    }
+    const hud = `
+    <svg viewBox="0 0 132 132" fill="none">
+      <polygon points="66,2 121.4,34 121.4,98 66,130 10.6,98 10.6,34" stroke="#00E5FF" stroke-width="1" opacity=".3"/>
+      <polygon points="66,14 118,40 118,92 66,118 14,92 14,40" stroke="#00E5FF" stroke-width="1" opacity=".55"/>
+      <circle class="frame-ring" cx="66" cy="66" r="58" stroke="#00E5FF" stroke-width="1" stroke-dasharray="5 9" opacity=".4"/>
+      <circle class="lock-arc" cx="66" cy="66" r="61" stroke="#FF2A4F" stroke-width="1.5" stroke-dasharray="74 309" stroke-linecap="round" opacity=".8"/>
+      ${ticks}
+    </svg>`;
+    const inner = AVATAR_URL
+      ? `<img class="ph-main" src="${AVATAR_URL}" alt="陳齊修 Astroicers">
+         ${AVATAR_DUOTONE ? '<div class="tint"></div>' : ''}
+         <div class="vignette"></div>
+         <img class="ph-ghost ph-r" src="${AVATAR_URL}" alt="">
+         <img class="ph-ghost ph-c" src="${AVATAR_URL}" alt="">
+         <div class="photo-scan"></div>`
+      : `<div class="ph-empty">
+           <svg viewBox="0 0 100 100"><circle cx="50" cy="36" r="15" fill="#1B4256"/><path d="M18 90 Q50 58 82 90 L82 94 L18 94 Z" fill="#1B4256"/></svg>
+           <span class="cap">awaiting uplink</span>
+         </div>
+         <div class="photo-scan"></div>`;
+    stage.innerHTML = `<div class="photo-hex ${AVATAR_DUOTONE ? 'duotone' : ''}">${inner}</div><div class="hud">${hud}</div>`;
+  })();
+
+  /* ════ QR:用 qrcode-generator 自繪 SVG(修復破圖)════ */
+  function renderQR(){
+    const text = QR_MODE === 'vcard' ? vcard : CARD_URL;
+    if(/[^\x00-\x7F]/.test(text) && qrcode.stringToBytesFuncs){
+      qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+    }
+    const qr = qrcode(0, QR_MODE === 'vcard' ? 'L' : 'M');
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    let d = '';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c)) d += `M${c} ${r}h1v1h-1z`;
+    document.getElementById('qrcode').innerHTML =
+      `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="QR Code"><path d="${d}" fill="#04070D"/></svg>`;
+    document.getElementById('qrCap').textContent =
+      QR_MODE === 'vcard' ? '掃描即存入聯絡人' : '掃描開啟線上名片 · ' + CARD_URL.replace(/^https?:\/\//,'');
+  }
+  try{ renderQR(); }catch(e){
+    document.getElementById('qrCap').textContent = CARD_URL;
+  }
+
+  /* ════ 存通訊錄 ════ */
+  const toast = document.getElementById('toast');
+  document.getElementById('saveBtn').addEventListener('click',()=>{
+    const blob = new Blob([vcard],{type:'text/vcard;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'astroicers.vcf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),1800);
+  });
+
+  /* ════ 翻面(背面整面可點返回)════ */
+  const flip = document.getElementById('flip');
+  document.getElementById('qrBtn').addEventListener('click',()=>flip.classList.add('flipped'));
+  document.getElementById('back').addEventListener('click',()=>flip.classList.remove('flipped'));
+
+  /* ════ THREE.JS 背景 ════ */
+  const canvas = document.getElementById('bg');
+  const renderer = new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x04070D);
+  scene.fog = new THREE.Fog(0x04070D,16,52);
+  const camera = new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);
+  camera.position.set(0,4,15); camera.lookAt(0,2,0);
+
+  const SEG=36,SIZE=58;
+  function terrain(){
+    const g=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      const x=p.getX(i),y=p.getY(i);
+      const h=Math.sin(x*.35)*Math.cos(y*.3)*.9+Math.sin(x*.12+y*.21)*1.4+Math.abs(Math.sin(x*.05))*1.6;
+      p.setZ(i,h*Math.min(Math.abs(x)/6,1));
+    }
+    g.computeVertexNormals();
+    const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x0C3344,wireframe:true,transparent:true,opacity:.5}));
+    m.rotation.x=-Math.PI/2; return m;
+  }
+  const t1=terrain(),t2=terrain(); t2.position.z=-SIZE; scene.add(t1,t2);
+
+  const P=420,pg=new THREE.BufferGeometry(),pa=new Float32Array(P*3);
+  for(let i=0;i<P;i++){pa[i*3]=(Math.random()-.5)*68;pa[i*3+1]=Math.random()*22;pa[i*3+2]=(Math.random()-.5)*68;}
+  pg.setAttribute('position',new THREE.BufferAttribute(pa,3));
+  scene.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x00E5FF,size:.07,transparent:true,opacity:.55})));
+
+  const ico=new THREE.Mesh(new THREE.IcosahedronGeometry(3,1),new THREE.MeshBasicMaterial({color:0x00E5FF,wireframe:true,transparent:true,opacity:.14}));
+  ico.position.set(0,6.5,-13); scene.add(ico);
+  const core=new THREE.Mesh(new THREE.OctahedronGeometry(1,0),new THREE.MeshBasicMaterial({color:0xFF2A4F,wireframe:true,transparent:true,opacity:.5}));
+  core.position.copy(ico.position); scene.add(core);
+
+  let tx=0,ty=0,mx=0,my=0;
+  if(finePointer) addEventListener('mousemove',e=>{tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5;});
+  const clock=new THREE.Clock();
+  (function loop(){
+    requestAnimationFrame(loop);
+    const dt=clock.getDelta();
+    if(!reduced){
+      const v=dt*3; t1.position.z+=v; t2.position.z+=v;
+      if(t1.position.z>=SIZE)t1.position.z=t2.position.z-SIZE;
+      if(t2.position.z>=SIZE)t2.position.z=t1.position.z-SIZE;
+      ico.rotation.y+=dt*.15; ico.rotation.x+=dt*.05;
+      core.rotation.y-=dt*.5; core.rotation.z+=dt*.3;
+      const a=pg.attributes.position.array;
+      for(let i=0;i<P;i++){a[i*3+1]+=dt*.5;if(a[i*3+1]>22)a[i*3+1]=0;}
+      pg.attributes.position.needsUpdate=true;
+    }
+    mx+=(tx-mx)*.04; my+=(ty-my)*.04;
+    camera.position.x=mx*2.5; camera.position.y=4-my*1.2; camera.lookAt(0,2,0);
+    renderer.render(scene,camera);
+  })();
+  addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  });
+
+  /* ════ 文字解碼 ════ */
+  const CH='!<>-_\\/[]{}—=+*^?#01';
+  function scramble(el,final,dur){
+    const s=performance.now();
+    (function tick(now){
+      const p=Math.min((now-s)/dur,1),r=Math.floor(p*final.length);
+      let o=final.slice(0,r);
+      for(let i=r;i<final.length;i++)o+=final[i]===' '?' ':CH[Math.random()*CH.length|0];
+      el.textContent=o; if(p<1)requestAnimationFrame(tick);
+    })(s);
+  }
+
+  /* ════ 進場 ════ */
+  if(reduced) return;
+  const nameEl=document.getElementById('name'),subEl=document.getElementById('subname');
+  anime.timeline({easing:'easeOutExpo'})
+  .add({targets:'#boot-log .ln',opacity:[0,1],translateX:[-8,0],duration:150,delay:anime.stagger(185),easing:'linear'})
+  .add({targets:'#boot',opacity:[1,0],duration:400,delay:300,complete:()=>document.getElementById('boot').style.display='none'})
+  .add({targets:'#front',opacity:[0,1],translateY:[36,0],duration:780,
+        begin:()=>{scramble(nameEl,'ASTROICERS',850);scramble(subEl,'CHEN CHI-HSIU',1050);}},'-=120')
+  .add({targets:'#scanline',opacity:[0,1,1,0],top:['0%','100%'],duration:680,easing:'easeInOutQuad'},'-=560')
+  .add({targets:'.bracket',opacity:[0,1],scale:[1.5,1],duration:420,delay:anime.stagger(60)},'-=480')
+  .add({targets:'.tag',opacity:[0,1],translateY:[8,0],duration:340,delay:anime.stagger(55)},'-=300')
+  .add({targets:'.rule',scaleX:[0,1],duration:520},'-=300')
+  .add({targets:'.chip',opacity:[0,1],duration:280,delay:anime.stagger(28)},'-=380')
+  .add({targets:'.c-row',opacity:[0,1],translateX:[-12,0],duration:400,delay:anime.stagger(75)},'-=260');
+
+  nameEl.addEventListener('mouseenter',()=>scramble(nameEl,'ASTROICERS',560));
+})();
+</script>
+</body>
+</html>
